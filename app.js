@@ -22,10 +22,54 @@ const playerName = document.getElementById("playerName");
 const playerType = document.getElementById("playerType");
 const closeGame = document.getElementById("closeGame");
 const openNewTab = document.getElementById("openNewTab");
+const fitModeBtn = document.getElementById("fitModeBtn");
+const theaterBtn = document.getElementById("theaterBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 let GAMES = [];
 let activeRoute = "games";
 let activeGame = null;
+let fitMode = "fit"; // "fit" or "fill"
+let theaterOn = false;
+
+function applyPlayerModes(){
+  // fit/fill classes
+  playerArea.classList.toggle("fit", fitMode === "fit");
+  playerArea.classList.toggle("fill", fitMode === "fill");
+  fitModeBtn.textContent = (fitMode === "fit") ? "Fit" : "Fill";
+
+  // theater class
+  playerArea.classList.toggle("theater", theaterOn);
+  theaterBtn.textContent = theaterOn ? "Theater: On" : "Theater";
+}
+
+function pokeIframeResize(){
+  // Helps canvas/WebGL games resize correctly inside an iframe
+  try{
+    if (player && player.contentWindow) {
+      player.contentWindow.dispatchEvent(new Event("resize"));
+    }
+  }catch(e){
+    // ignore cross-origin errors (external games)
+  }
+}
+
+async function goFullscreen(){
+  // Fullscreen the container so the top bar stays with the game
+  if (!document.fullscreenElement) {
+    await playerArea.requestFullscreen();
+  } else {
+    await document.exitFullscreen();
+  }
+}
+
+// Keep button label updated + reflow game after fullscreen changes
+document.addEventListener("fullscreenchange", () => {
+  const isFs = !!document.fullscreenElement;
+  playerArea.classList.toggle("isFullscreen", isFs);
+  fullscreenBtn.textContent = isFs ? "Exit Fullscreen" : "Fullscreen";
+  setTimeout(pokeIframeResize, 80);
+});
 
 /* ========= helpers ========= */
 function escapeHtml(s){
@@ -102,7 +146,9 @@ function playGame(game){
   playerType.textContent = "LOCAL";
   playerName.textContent = game.name;
   playerArea.classList.remove("hidden");
-  player.src = game.path;
+applyPlayerModes();
+player.src = game.path;
+setTimeout(pokeIframeResize, 80);
 
   openNewTab.onclick = () => window.open(game.path, "_blank", "noopener");
 }
@@ -183,12 +229,26 @@ openNewTab.addEventListener("click", ()=>{
   if(activeGame.type === "external") window.open(activeGame.url, "_blank", "noopener");
   else window.open(activeGame.path, "_blank", "noopener");
 });
+fitModeBtn.addEventListener("click", () => {
+  fitMode = (fitMode === "fit") ? "fill" : "fit";
+  applyPlayerModes();
+  setTimeout(pokeIframeResize, 50);
+});
 
+theaterBtn.addEventListener("click", () => {
+  theaterOn = !theaterOn;
+  applyPlayerModes();
+  setTimeout(pokeIframeResize, 50);
+});
+
+fullscreenBtn.addEventListener("click", () => {
+  goFullscreen().catch(console.error);
+});
 /* ========= init ========= */
 setRoute("games");            // default internal
 document.querySelector(".topRight").style.visibility = "hidden"; // only show search in games view
 closeGameFn();
-
+applyPlayerModes();
 loadGames().catch(err=>{
   console.error(err);
   grid.innerHTML = `

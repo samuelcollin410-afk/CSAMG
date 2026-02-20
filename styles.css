@@ -336,9 +336,7 @@ code{
   color: rgba(234,240,255,.85);
 }
 
-/* =========================
-   PLAYER
-========================= */
+/* PLAYER */
 .playerArea{
   margin-top: 16px;
   border-radius: var(--radius);
@@ -346,6 +344,27 @@ code{
   overflow:hidden;
   background: rgba(0,0,0,.16);
   box-shadow: var(--shadow);
+
+  /* key change: player can grow without looking squished */
+  display:flex;
+  flex-direction:column;
+}
+
+/* normal mode sizing */
+.playerArea:not(.theater){
+  height: min(72vh, 760px);   /* big but not insane */
+}
+
+/* theater mode: almost full page height under top bar */
+.playerArea.theater{
+  height: calc(100vh - 86px); /* leaves space for topbar + padding */
+}
+
+/* full screen class (backup styling) */
+.playerArea.isFullscreen{
+  border-radius: 0;
+  border: 0;
+  height: 100vh;
 }
 
 .playerBar{
@@ -356,43 +375,27 @@ code{
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   background: rgba(0,0,0,.14);
+  flex: 0 0 auto;
 }
 
-.playerLeft{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-}
-
-.pill{
-  font-size: 11px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(124,92,255,.40);
-  background: rgba(124,92,255,.18);
-}
-
-.playerName{ font-weight: 900; }
-
-.playerRight{ display:flex; gap: 10px; }
-
-.btn{
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  cursor:pointer;
-  font-weight: 700;
-}
-.btn:hover{ background: rgba(255,255,255,.08); }
-.btn.ghost{ background: transparent; }
-
+/* IMPORTANT: iframe fills whatever height playerArea has */
 .player{
   width:100%;
-  height: 70vh;
+  height: 100%;
+  flex: 1 1 auto;
   border:0;
   background:#000;
+
+  /* prevents weird shrinking on some browsers */
+  display:block;
+}
+
+/* Fit/Fill modes (works for games that use responsive canvas) */
+.playerArea.fit .player {  /* default */
+  /* nothing special, game gets full iframe */
+}
+.playerArea.fill .player {
+  /* still fills, but we’ll treat this as a setting toggle (JS can change UI) */
 }
 
 /* =========================
