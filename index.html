@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CSAMGG</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HOME -->
+  <section id="home" class="home">
+   
+
+    <div class="homeCenter">
+      <div class="homeTitle">CSAMGG</div>
+      <div class="homeSub">games hub</div>
+
+      <div class="homeBtns">
+        <button class="homeBtn primary" data-go="games">Games</button>
+        <button class="homeBtn" data-go="settings">Settings</button>
+        <button class="homeBtn" data-go="credits">Credits</button>
+      </div>
+
+      
+    </div>
+  </section>
+
+  <!-- APP SHELL -->
+  <section id="shell" class="shell hidden">
+    <header class="topbar">
+      <button id="burger" class="iconBtn" title="Menu" aria-label="Menu">☰</button>
+
+      <div class="topTitle" role="button" tabindex="0" id="topBrand">CSAMGG</div>
+
+      <div class="topRight">
+        <div class="searchWrap">
+          <input id="search" class="search" placeholder="Search games..." autocomplete="off" />
+          <span class="searchIcon">⌕</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SIDE MENU (slides out) -->
+    <aside id="drawer" class="drawer">
+      <div class="drawerHeader">
+        <div class="drawerLogo">🎮</div>
+        <div>
+          <div class="drawerTitle">CSAMGG</div>
+          <div class="drawerSub">menu</div>
+        </div>
+      </div>
+
+      <div class="drawerBtns">
+        <button class="drawerBtn active" data-route="games">Games</button>
+        <button class="drawerBtn" data-route="settings">Settings</button>
+        <button class="drawerBtn" data-route="credits">Credits</button>
+        <button class="drawerBtn ghost" id="backHome">Back to Home</button>
+      </div>
+    </aside>
+
+    <div id="backdrop" class="backdrop hidden"></div>
+
+    <main class="main">
+      <!-- GAMES PAGE -->
+      <section id="page-games" class="page active">
+        <div id="grid" class="grid"></div>
+
+        <div id="playerArea" class="playerArea hidden">
+          <div class="playerBar">
+            <div class="playerLeft">
+              <span id="playerType" class="pill">LOCAL</span>
+              <span id="playerName" class="playerName">—</span>
+            </div>
+            <div class="playerRight">
+              <button id="closeGame" class="btn ghost">Close</button>
+              <button id="openNewTab" class="btn">Open in new tab</button>
+            </div>
+          </div>
+          <iframe
+            id="player"
+            class="player"
+            title="Game player"
+            loading="lazy"
+            sandbox="allow-scripts allow-pointer-lock allow-forms allow-same-origin"
+          ></iframe>
+        </div>
+      </section>
+
+      <!-- SETTINGS PAGE -->
+      <section id="page-settings" class="page">
+        <div class="wipCard">
+          <div class="wipTitle">Settings</div>
+          <div class="wipSub">WIP</div>
+        </div>
+      </section>
+
+      <!-- CREDITS PAGE -->
+      <section id="page-credits" class="page">
+        <div class="wipCard">
+          <div class="wipTitle">Credits</div>
+          <div class="wipSub">WIP</div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

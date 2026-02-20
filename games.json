@@ -1,0 +1,18 @@
+[
+{
+  "id": "bee-swarm",
+  "name": "Bee Swarm",
+  "desc": "Bee Swarm Simulator (WebGL remake).",
+  "type": "local",
+  "path": "games/bee-swarm/index.html",
+  "image": "games/bee-swarm/icon-image.png"
+},
+  {
+    "id": "example-external",
+    "name": "External Example",
+    "desc": "Opens in a new tab.",
+    "type": "external",
+    "url": "https://example.com",
+    "image": "assets/external.png"
+  }
+]
