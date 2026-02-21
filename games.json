@@ -7,5 +7,12 @@
   "path": "games/bee-swarm/index.html",
   "image": "games/bee-swarm/icon-image.png"
 }
-  
+  ,{
+  "id": "shark-game",
+  "name": "Shark Game",
+  "desc": "Idle / incremental game (MIT).",
+  "type": "local",
+  "path": "games/shark-game/index.html",
+  "image": "games/shark-game/icon.png"
+}
 ]
