@@ -444,3 +444,6 @@ code{
   background: rgba(255,255,255,.10);
   margin: 14px 0;
 }
+.backdrop.hidden{
+  pointer-events: none;
+}

@@ -47,6 +47,18 @@ let activeGame = null;
 let fitMode = "fit"; // "fit" or "fill"
 let theaterOn = false;
 
+
+function cleanupUI(){
+  // Close drawer + remove backdrop
+  drawer.classList.remove("open");
+  backdrop.classList.add("hidden");
+
+  // Release pointer lock if a game grabbed it
+  if (document.pointerLockElement) {
+    document.exitPointerLock();
+  }
+}
+
 function applyPlayerModes(){
   // fit/fill classes
   playerArea.classList.toggle("fit", fitMode === "fit");
@@ -187,7 +199,7 @@ function setRoute(route){
   // Search bar only on games page
   document.querySelector(".topRight").style.visibility = (route === "games") ? "visible" : "hidden";
 
-  closeDrawer();
+    cleanupUI();
 }
 
 function showShell(){
@@ -275,6 +287,16 @@ function render(filter=""){
   });
 }
 
+function forceCloseUI(){
+  // close drawer + backdrop no matter what
+  drawer?.classList.remove("open");
+  backdrop?.classList.add("hidden");
+
+  // release pointer lock if any game grabbed it
+  try { document.exitPointerLock(); } catch {}
+}
+
+
 /* ========= load games ========= */
 async function loadGames(){
   const res = await fetch("games.json", { cache:"no-store" });
@@ -300,11 +322,17 @@ burger.addEventListener("click", ()=>{
 backdrop.addEventListener("click", closeDrawer);
 
 backHome.addEventListener("click", showHome);
-topBrand.addEventListener("click", ()=> setRoute("games"));
+topBrand.addEventListener("click", () => {
+  cleanupUI();
+  goHash("games");
+});
 topBrand.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" ") setRoute("games"); });
 
 document.querySelectorAll(".drawerBtn[data-route]").forEach(btn=>{
-  btn.addEventListener("click", ()=> setRoute(btn.dataset.route));
+  btn.addEventListener("click", ()=>{
+    cleanupUI();
+    setRoute(btn.dataset.route);
+  });
 });
 
 search.addEventListener("input", ()=> render(search.value));
