@@ -36,9 +36,9 @@ const gamePlayerType = document.getElementById("gamePlayerType");
 const gameTitle = document.getElementById("gameTitle");
 const gameDesc = document.getElementById("gameDesc");
 
-const gameBackBtn = document.getElementById("gameBackBtn");
+
 const gameOpenNewTab = document.getElementById("gameOpenNewTab");
-const gameTheaterBtn = document.getElementById("gameTheaterBtn");
+
 const gameFullscreenBtn = document.getElementById("gameFullscreenBtn");
 
 let GAMES = [];
@@ -81,9 +81,16 @@ async function goFullscreen(){
 // Keep button label updated + reflow game after fullscreen changes
 document.addEventListener("fullscreenchange", () => {
   const isFs = !!document.fullscreenElement;
-  playerArea.classList.toggle("isFullscreen", isFs);
-  fullscreenBtn.textContent = isFs ? "Exit Fullscreen" : "Fullscreen";
-  setTimeout(pokeIframeResize, 80);
+
+  // Change button text
+  gameFullscreenBtn.textContent = isFs ? "Exit Fullscreen" : "Fullscreen";
+
+  // Optional: resize local canvas games
+  setTimeout(() => {
+    try {
+      forceCanvasCover?.(gamePlayer);
+    } catch {}
+  }, 120);
 });
 
 function parseHash(){
@@ -107,7 +114,7 @@ function goHash(route, id){
   else location.hash = `#${route}`;
 }
 
-let gameTheaterOn = true;
+
 
 function openGamePage(game){
   if(!game) return;
@@ -123,9 +130,6 @@ function openGamePage(game){
   gamePlayerName.textContent = game.name || "—";
   gamePlayerType.textContent = (game.type === "external") ? "EXTERNAL" : "LOCAL";
 
-  // theater default ON (big game)
-  gamePlayerArea.classList.toggle("theater", gameTheaterOn);
-  gameTheaterBtn.textContent = gameTheaterOn ? "Theater: On" : "Theater";
 
   if(game.type === "external"){
     // open in new tab, and still show description page
@@ -342,17 +346,8 @@ loadGames()
       </div>
     `;
   });
-gameBackBtn.addEventListener("click", () => goHash("games"));
 
-gameTheaterBtn.addEventListener("click", () => {
-  gameTheaterOn = !gameTheaterOn;
-  gamePlayerArea.classList.toggle("theater", gameTheaterOn);
-  gameTheaterBtn.textContent = gameTheaterOn ? "Theater: On" : "Theater";
-  // nudge resize for WebGL games
-  setTimeout(() => {
-    try{ gamePlayer.contentWindow?.dispatchEvent(new Event("resize")); }catch{}
-  }, 80);
-});
+ 
 
 gameFullscreenBtn.addEventListener("click", toggleGameFullscreen);
 function handleRoute(){
