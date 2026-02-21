@@ -104,6 +104,47 @@
           <div class="wipSub">WIP</div>
         </div>
       </section>
+    
+    <!-- GAME PAGE -->
+<section id="page-game" class="page">
+  <div class="gamePage">
+    <div id="gamePlayerArea" class="playerArea">
+      <div class="playerBar">
+        <div class="playerLeft">
+          <span id="gamePlayerType" class="pill">LOCAL</span>
+          <span id="gamePlayerName" class="playerName">—</span>
+        </div>
+        <div class="playerRight">
+          <button id="gameTheaterBtn" class="btn ghost" title="Theater mode">Theater</button>
+          <button id="gameFullscreenBtn" class="btn" title="Fullscreen">Fullscreen</button>
+          <button id="gameBackBtn" class="btn ghost" title="Back to games">Back</button>
+          <button id="gameOpenNewTab" class="btn">Open in new tab</button>
+        </div>
+      </div>
+
+      <iframe
+        id="gamePlayer"
+        class="player"
+        title="Game player"
+        loading="lazy"
+        sandbox="allow-scripts allow-pointer-lock allow-forms allow-same-origin"
+      ></iframe>
+    </div>
+
+    <!-- Scroll down content -->
+    <div class="gameInfoCard">
+      <h2 id="gameTitle">Game Title</h2>
+      <p id="gameDesc" class="muted">Description will show here. You can add more sections later.</p>
+
+      <div class="divider"></div>
+
+      <h3>Notes / Controls</h3>
+      <p class="muted">WIP — you can write controls, tips, credits, etc.</p>
+    </div>
+  </div>
+</section>
+    
+
     </main>
   </section>
 

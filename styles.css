@@ -394,9 +394,6 @@ code{
 .playerArea.fit .player {  /* default */
   /* nothing special, game gets full iframe */
 }
-.playerArea.fill .player {
-  /* still fills, but we’ll treat this as a setting toggle (JS can change UI) */
-}
 
 /* =========================
    WIP PAGES
@@ -422,4 +419,31 @@ code{
   font-weight: 800;
   letter-spacing: .18em;
   text-transform: uppercase;
+}
+/* GAME PAGE LAYOUT */
+.gamePage{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* make the game feel like its own page */
+#page-game .playerArea{
+  margin-top: 0;
+  height: calc(100vh - 90px); /* fills screen under top bar */
+}
+
+/* description card below (scroll down) */
+.gameInfoCard{
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.05);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.divider{
+  height: 1px;
+  background: rgba(255,255,255,.10);
+  margin: 14px 0;
 }

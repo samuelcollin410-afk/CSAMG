@@ -26,6 +26,21 @@ const fitModeBtn = document.getElementById("fitModeBtn");
 const theaterBtn = document.getElementById("theaterBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
+const pageGame = document.getElementById("page-game");
+
+// Game page player elements
+const gamePlayerArea = document.getElementById("gamePlayerArea");
+const gamePlayer = document.getElementById("gamePlayer");
+const gamePlayerName = document.getElementById("gamePlayerName");
+const gamePlayerType = document.getElementById("gamePlayerType");
+const gameTitle = document.getElementById("gameTitle");
+const gameDesc = document.getElementById("gameDesc");
+
+const gameBackBtn = document.getElementById("gameBackBtn");
+const gameOpenNewTab = document.getElementById("gameOpenNewTab");
+const gameTheaterBtn = document.getElementById("gameTheaterBtn");
+const gameFullscreenBtn = document.getElementById("gameFullscreenBtn");
+
 let GAMES = [];
 let activeRoute = "games";
 let activeGame = null;
@@ -71,6 +86,72 @@ document.addEventListener("fullscreenchange", () => {
   setTimeout(pokeIframeResize, 80);
 });
 
+function parseHash(){
+  // Examples:
+  // #games
+  // #settings
+  // #credits
+  // #game=bee-swarm
+  const h = (location.hash || "#games").slice(1);
+
+  if (h.startsWith("game=")) {
+    return { route: "game", id: decodeURIComponent(h.slice(5)) };
+  }
+  if (h === "settings") return { route: "settings" };
+  if (h === "credits") return { route: "credits" };
+  return { route: "games" };
+}
+
+function goHash(route, id){
+  if(route === "game") location.hash = `#game=${encodeURIComponent(id)}`;
+  else location.hash = `#${route}`;
+}
+
+let gameTheaterOn = true;
+
+function openGamePage(game){
+  if(!game) return;
+
+  // show game page
+  setRoute("game");
+
+  // fill title + desc section
+  gameTitle.textContent = game.name || "Game";
+  gameDesc.textContent = game.desc || "WIP description.";
+
+  // set player labels
+  gamePlayerName.textContent = game.name || "—";
+  gamePlayerType.textContent = (game.type === "external") ? "EXTERNAL" : "LOCAL";
+
+  // theater default ON (big game)
+  gamePlayerArea.classList.toggle("theater", gameTheaterOn);
+  gameTheaterBtn.textContent = gameTheaterOn ? "Theater: On" : "Theater";
+
+  if(game.type === "external"){
+    // open in new tab, and still show description page
+    gamePlayer.src = "about:blank";
+    window.open(game.url, "_blank", "noopener");
+    gameOpenNewTab.onclick = () => window.open(game.url, "_blank", "noopener");
+  } else {
+    gamePlayer.src = game.path;
+    gameOpenNewTab.onclick = () => window.open(game.path, "_blank", "noopener");
+  }
+
+  // scroll to top of the game page
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+async function toggleGameFullscreen(){
+  try{
+    if(!document.fullscreenElement){
+      await gamePlayerArea.requestFullscreen();
+    }else{
+      await document.exitFullscreen();
+    }
+  }catch(e){
+    console.error(e);
+  }
+}
 /* ========= helpers ========= */
 function escapeHtml(s){
   return String(s ?? "").replace(/[&<>"']/g, m => ({
@@ -93,12 +174,13 @@ function setRoute(route){
   pageGames.classList.toggle("active", route === "games");
   pageSettings.classList.toggle("active", route === "settings");
   pageCredits.classList.toggle("active", route === "credits");
+  pageGame.classList.toggle("active", route === "game");
 
   document.querySelectorAll(".drawerBtn[data-route]").forEach(b=>{
     b.classList.toggle("active", b.dataset.route === route);
   });
 
-  // Search bar only on games page (like your mockup)
+  // Search bar only on games page
   document.querySelector(".topRight").style.visibility = (route === "games") ? "visible" : "hidden";
 
   closeDrawer();
@@ -179,9 +261,9 @@ function render(filter=""){
   grid.querySelectorAll(".tile").forEach(t=>{
     const id = t.dataset.id;
     const pick = () => {
-      const game = GAMES.find(x => x.id === id);
-      if(game) playGame(game);
-    };
+  const game = GAMES.find(x => x.id === id);
+  if(game) goHash("game", game.id);
+};
     t.addEventListener("click", pick);
     t.addEventListener("keydown", (e)=>{
       if(e.key === "Enter" || e.key === " ") pick();
@@ -249,12 +331,41 @@ setRoute("games");            // default internal
 document.querySelector(".topRight").style.visibility = "hidden"; // only show search in games view
 closeGameFn();
 applyPlayerModes();
-loadGames().catch(err=>{
-  console.error(err);
-  grid.innerHTML = `
-    <div class="wipCard">
-      <div class="wipTitle">Error</div>
-      <div class="wipSub">${escapeHtml(err.message)}</div>
-    </div>
-  `;
+loadGames()
+  .then(handleRoute)
+  .catch(err => {
+    console.error(err);
+    grid.innerHTML = `
+      <div class="wipCard">
+        <div class="wipTitle">Error</div>
+        <div class="wipSub">${escapeHtml(err.message)}</div>
+      </div>
+    `;
+  });
+gameBackBtn.addEventListener("click", () => goHash("games"));
+
+gameTheaterBtn.addEventListener("click", () => {
+  gameTheaterOn = !gameTheaterOn;
+  gamePlayerArea.classList.toggle("theater", gameTheaterOn);
+  gameTheaterBtn.textContent = gameTheaterOn ? "Theater: On" : "Theater";
+  // nudge resize for WebGL games
+  setTimeout(() => {
+    try{ gamePlayer.contentWindow?.dispatchEvent(new Event("resize")); }catch{}
+  }, 80);
 });
+
+gameFullscreenBtn.addEventListener("click", toggleGameFullscreen);
+function handleRoute(){
+  const r = parseHash();
+
+  if(r.route === "game"){
+    const g = GAMES.find(x => x.id === r.id);
+    if(g) openGamePage(g);
+    else setRoute("games");
+    return;
+  }
+
+  setRoute(r.route);
+}
+
+window.addEventListener("hashchange", handleRoute);
