@@ -4794,38 +4794,160 @@
 <script src='thumbnail.js'></script>
 <script src='index.js'></script>
 
-<div id="chatWrap" style="position:fixed;right:16px;bottom:16px;width:320px;height:360px;display:none;background:rgba(11,15,24,.85);border:1px solid #2b3550;border-radius:12px;backdrop-filter:blur(10px);color:#fff;overflow:hidden;z-index:99999;">
-  <div style="padding:10px;border-bottom:1px solid #2b3550;font-weight:700;">
-    BeeSwarm Chat <span style="opacity:.7;font-weight:400;">(beeswarm)</span>
+<!-- =========================
+     BEE SWARM CHAT (CLEAN UI)
+     Paste directly under: <script src="index.js"></script>
+========================= -->
+
+<style>
+  #chatWrap {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 340px;
+    height: 420px;
+    background: rgba(15, 18, 30, 0.95);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid #2d3557;
+    display: flex;
+    flex-direction: column;
+    z-index: 99999;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+
+  .chat-hidden { display: none !important; }
+
+  .chat-header {
+    padding: 12px 14px;
+    background: #121629;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2d3557;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: #fff;
+  }
+
+  .chat-header button {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .chat-header button:hover { color: #fff; }
+
+  #chatLog {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: #fff;
+  }
+
+  #chatLog .msg { margin-bottom: 6px; opacity: 0.95; }
+
+  #chatHint {
+    font-size: 12px;
+    color: #aaa;
+    padding: 0 12px 6px;
+    min-height: 16px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+
+  #chatForm {
+    display: flex;
+    gap: 6px;
+    padding: 10px;
+    border-top: 1px solid #2d3557;
+    background: rgba(8, 10, 20, 0.7);
+  }
+
+  #chatName, #chatInput {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #2d3557;
+    background: #0b1020;
+    color: #fff;
+    font-size: 13px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    outline: none;
+  }
+
+  #chatName { width: 90px; }
+  #chatInput { flex: 1; }
+
+  #chatSendBtn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    background: #4c6fff;
+    color: #fff;
+    cursor: pointer;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-size: 13px;
+  }
+
+  #chatSendBtn:hover { background: #3b5be0; }
+
+  #chatBtn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: #121629;
+    border: 1px solid #2d3557;
+    color: #fff;
+    cursor: pointer;
+    z-index: 100000;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-size: 14px;
+  }
+</style>
+
+<div id="chatWrap" class="chat-hidden">
+  <div class="chat-header">
+    <span>BeeSwarm Chat</span>
+    <button id="chatClose" type="button" aria-label="Close chat">✕</button>
   </div>
-  <div id="chatLog" style="height:270px;overflow:auto;padding:10px;font:14px/1.3 system-ui;"></div>
-  <div id="chatHint" style="padding:0 10px 8px;opacity:.7;font:12px system-ui;"></div>
-  <form id="chatForm" style="display:flex;gap:8px;padding:10px;border-top:1px solid #2b3550;">
-    <input id="chatName" maxlength="18" placeholder="Name" style="width:90px;padding:10px;border-radius:10px;border:1px solid #2b3550;background:#0b0f18;color:#fff;">
-    <input id="chatInput" maxlength="200" autocomplete="off" placeholder="Type message…" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2b3550;background:#0b0f18;color:#fff;">
-    <button id="chatSendBtn" style="padding:10px 12px;border-radius:10px;border:1px solid #2b3550;background:#1a2340;color:#fff;">Send</button>
+
+  <div id="chatLog"></div>
+  <div id="chatHint"></div>
+
+  <form id="chatForm" autocomplete="off">
+    <input id="chatName" maxlength="18" placeholder="Name">
+    <input id="chatInput" maxlength="200" placeholder="Type message...">
+    <button id="chatSendBtn" type="submit">Send</button>
   </form>
 </div>
 
-<button id="chatBtn" style="position:fixed;right:16px;bottom:16px;z-index:100000;padding:10px 12px;border-radius:12px;border:1px solid #2b3550;background:#121a2f;color:#fff;">
-  Chat
-</button>
+<button id="chatBtn" type="button">Chat</button>
 
 <script>
 (() => {
-  const API = "https://script.google.com/macros/s/AKfycbxKGagfLNZWg1B8BFGlheRRw-BPb1WpcbojR2w5iMaiL-lW07SkPmqvgI2OnWeblJQz/exec"; // <-- paste your Apps Script web app URL
+  // IMPORTANT: keep your own Apps Script URL here
+  const API  = "https://script.google.com/macros/s/AKfycbxKGagfLNZWg1B8BFGlheRRw-BPb1WpcbojR2w5iMaiL-lW07SkPmqvgI2OnWeblJQz/exec";
   const ROOM = "beeswarm";
 
-  // cooldown
+  // 8s anti-spam cooldown
   const COOLDOWN_MS = 8000;
   let lastSentAt = 0;
 
-  // polling
+  // poll every 5s
   let lastSeenTs = 0;
   const POLL_MS = 5000;
   let pollTimer = null;
 
-  // load saved name
+  // restore name
   const savedName = localStorage.getItem("beeswarm_chat_name");
   if (savedName) chatName.value = savedName;
 
@@ -4834,89 +4956,89 @@
   function addMsg(m) {
     const time = new Date(m.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     const div = document.createElement("div");
-    div.style.marginBottom = "6px";
+    div.className = "msg";
     div.textContent = `[${time}] ${m.name}: ${m.text}`;
     chatLog.appendChild(div);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
+  // JSONP poll (Chromebook/CORS safe)
   function poll() {
-  return new Promise((resolve) => {
-    const cbName = "cb_" + Math.random().toString(36).slice(2);
-    const script = document.createElement("script");
+    return new Promise((resolve) => {
+      const cbName = "cb_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
 
-    window[cbName] = (data) => {
-      try {
-        if (data.ok && Array.isArray(data.messages)) {
-          for (const m of data.messages) {
-            addMsg(m);
-            if (m.ts > lastSeenTs) lastSeenTs = m.ts;
+      window[cbName] = (data) => {
+        try {
+          if (data && data.ok && Array.isArray(data.messages)) {
+            for (const m of data.messages) {
+              addMsg(m);
+              if (m.ts > lastSeenTs) lastSeenTs = m.ts;
+            }
+          } else if (data && data.error) {
+            setHint("Chat API error: " + data.error);
           }
-        } else if (data && data.error) {
-          setHint("Chat API error: " + data.error);
+        } finally {
+          delete window[cbName];
+          script.remove();
+          resolve();
         }
-      } catch (e) {
-        console.error(e);
-      } finally {
+      };
+
+      script.onerror = () => {
+        setHint("Poll failed (blocked).");
         delete window[cbName];
         script.remove();
         resolve();
-      }
-    };
+      };
 
-    script.onerror = () => {
-      setHint("Poll failed (JSONP blocked or wrong URL).");
-      delete window[cbName];
-      script.remove();
-      resolve();
-    };
+      script.src =
+        `${API}?action=get&room=${encodeURIComponent(ROOM)}&since=${encodeURIComponent(lastSeenTs)}&callback=${encodeURIComponent(cbName)}`;
 
-    script.src =
-      `${API}?action=get&room=${encodeURIComponent(ROOM)}&since=${encodeURIComponent(lastSeenTs)}&callback=${encodeURIComponent(cbName)}`;
-
-    document.body.appendChild(script);
-  });
-}
-
- function sendMessage(name, text) {
-  const now = Date.now();
-  const left = COOLDOWN_MS - (now - lastSentAt);
-  if (left > 0) {
-    setHint(`Wait ${Math.ceil(left/1000)}s before sending again.`);
-    return Promise.resolve();
+      document.body.appendChild(script);
+    });
   }
-  lastSentAt = now;
-  setHint("");
 
-  return new Promise((resolve) => {
-    const cbName = "sendcb_" + Math.random().toString(36).slice(2);
-    const script = document.createElement("script");
+  // JSONP send (no POST, no preflight, Chromebook safe)
+  function sendMessage(name, text) {
+    const now = Date.now();
+    const left = COOLDOWN_MS - (now - lastSentAt);
+    if (left > 0) {
+      setHint(`Wait ${Math.ceil(left/1000)}s before sending again.`);
+      return Promise.resolve();
+    }
 
-    window[cbName] = (data) => {
-      try {
-        if (!data.ok) setHint(data.error || "Failed to send.");
-        else setTimeout(poll, 400);
-      } finally {
+    lastSentAt = now;
+    setHint("");
+
+    return new Promise((resolve) => {
+      const cbName = "sendcb_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
+
+      window[cbName] = (data) => {
+        try {
+          if (!data || !data.ok) setHint((data && data.error) || "Failed to send.");
+          else setTimeout(poll, 350);
+        } finally {
+          delete window[cbName];
+          script.remove();
+          resolve();
+        }
+      };
+
+      script.onerror = () => {
+        setHint("Send failed (blocked).");
         delete window[cbName];
         script.remove();
         resolve();
-      }
-    };
+      };
 
-    script.onerror = () => {
-      setHint("Send failed (JSONP blocked).");
-      delete window[cbName];
-      script.remove();
-      resolve();
-    };
+      script.src =
+        `${API}?action=send&room=${encodeURIComponent(ROOM)}&name=${encodeURIComponent(name)}&text=${encodeURIComponent(text)}&callback=${encodeURIComponent(cbName)}`;
 
-    const url =
-      `${API}?action=send&room=${encodeURIComponent(ROOM)}&name=${encodeURIComponent(name)}&text=${encodeURIComponent(text)}&callback=${encodeURIComponent(cbName)}`;
-
-    script.src = url;
-    document.body.appendChild(script);
-  });
-}
+      document.body.appendChild(script);
+    });
+  }
 
   function startPolling() {
     if (pollTimer) return;
@@ -4930,27 +5052,25 @@
     pollTimer = null;
   }
 
-  // Toggle chat
-  chatBtn.onclick = () => {
-    const open = (chatWrap.style.display === "none");
-    chatWrap.style.display = open ? "block" : "none";
-    if (open) {
-      startPolling();
-      chatInput.focus();
-    } else {
-      stopPolling();
-    }
-  };
+  // Open chat
+  chatBtn.addEventListener("click", () => {
+    chatWrap.classList.remove("chat-hidden");
+    chatBtn.style.display = "none";
+    startPolling();
+    setTimeout(() => chatInput.focus(), 0);
+  });
 
-  // Keyboard shortcuts: Enter opens, Esc closes (won't break most games)
+  // Close chat
+  chatClose.addEventListener("click", () => {
+    chatWrap.classList.add("chat-hidden");
+    chatBtn.style.display = "block";
+    stopPolling();
+  });
+
+  // optional: Esc closes chat
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && chatWrap.style.display === "none") {
-      chatWrap.style.display = "block";
-      startPolling();
-      setTimeout(() => chatInput.focus(), 0);
-    } else if (e.key === "Escape" && chatWrap.style.display !== "none") {
-      chatWrap.style.display = "none";
-      stopPolling();
+    if (e.key === "Escape" && !chatWrap.classList.contains("chat-hidden")) {
+      chatClose.click();
     }
   });
 
@@ -4964,10 +5084,11 @@
     chatInput.value = "";
     sendMessage(name, text);
   });
-
 })();
 </script>
-
+<!-- =========================
+     END BEE SWARM CHAT
+========================= -->
 
 </body>
 </html>
