@@ -4852,30 +4852,28 @@
             addMsg(m);
             if (m.ts > lastSeenTs) lastSeenTs = m.ts;
           }
+        } else if (data && data.error) {
+          setHint("Chat API error: " + data.error);
         }
       } catch (e) {
         console.error(e);
       } finally {
-        cleanup();
+        delete window[cbName];
+        script.remove();
         resolve();
       }
     };
 
-    function cleanup() {
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
     script.onerror = () => {
-      setHint("Chat connection error (JSONP blocked).");
-      cleanup();
+      setHint("Poll failed (JSONP blocked or wrong URL).");
+      delete window[cbName];
+      script.remove();
       resolve();
     };
 
-    const url =
+    script.src =
       `${API}?action=get&room=${encodeURIComponent(ROOM)}&since=${encodeURIComponent(lastSeenTs)}&callback=${encodeURIComponent(cbName)}`;
 
-    script.src = url;
     document.body.appendChild(script);
   });
 }
