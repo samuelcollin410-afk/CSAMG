@@ -205,7 +205,7 @@ function setRoute(route){
 function showShell(){
   home.classList.add("hidden");
   shell.classList.remove("hidden");
-  setRoute("games");
+  // Don't force a route here. Hash will decide.
 }
 
 function showHome(){
@@ -296,6 +296,7 @@ function forceCloseUI(){
   try { document.exitPointerLock(); } catch {}
 }
 
+if (!location.hash) goHash("games");
 
 /* ========= load games ========= */
 async function loadGames(){
@@ -309,9 +310,14 @@ async function loadGames(){
 document.querySelectorAll("[data-go]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     const where = btn.dataset.go;
-    if(where === "games") showShell();
-    if(where === "settings") { showShell(); setRoute("settings"); }
-    if(where === "credits") { showShell(); setRoute("credits"); }
+
+    // show shell first
+    showShell();
+
+    // then route using HASH (so it never gets stuck on #game=...)
+    if(where === "games")   goHash("games");
+    if(where === "settings") goHash("settings");
+    if(where === "credits")  goHash("credits");
   });
 });
 
@@ -326,12 +332,17 @@ topBrand.addEventListener("click", () => {
   cleanupUI();
   goHash("games");
 });
-topBrand.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" ") setRoute("games"); });
+topBrand.addEventListener("keydown", (e)=>{
+  if(e.key==="Enter" || e.key===" ") {
+    cleanupUI();
+    goHash("games");
+  }
+});
 
 document.querySelectorAll(".drawerBtn[data-route]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     cleanupUI();
-    setRoute(btn.dataset.route);
+    goHash(btn.dataset.route); // <-- hash controls routing
   });
 });
 
