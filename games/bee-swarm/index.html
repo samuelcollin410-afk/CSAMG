@@ -4878,35 +4878,45 @@
   });
 }
 
-  async function sendMessage(name, text) {
-    const now = Date.now();
-    const left = COOLDOWN_MS - (now - lastSentAt);
-    if (left > 0) {
-      setHint(`Wait ${Math.ceil(left/1000)}s before sending again.`);
-      return;
-    }
-
-    lastSentAt = now;
-    setHint("");
-
-    try {
-      const res = await fetch(`${API}?action=send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ room: ROOM, name, text })
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        setHint(data.error || "Failed to send.");
-      } else {
-        // optional: pull quickly after send
-        setTimeout(poll, 500);
-      }
-    } catch (e) {
-      setHint("Send failed (check API link / permissions).");
-      console.error(e);
-    }
+ function sendMessage(name, text) {
+  const now = Date.now();
+  const left = COOLDOWN_MS - (now - lastSentAt);
+  if (left > 0) {
+    setHint(`Wait ${Math.ceil(left/1000)}s before sending again.`);
+    return Promise.resolve();
   }
+  lastSentAt = now;
+  setHint("");
+
+  return new Promise((resolve) => {
+    const cbName = "sendcb_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+
+    window[cbName] = (data) => {
+      try {
+        if (!data.ok) setHint(data.error || "Failed to send.");
+        else setTimeout(poll, 400);
+      } finally {
+        delete window[cbName];
+        script.remove();
+        resolve();
+      }
+    };
+
+    script.onerror = () => {
+      setHint("Send failed (JSONP blocked).");
+      delete window[cbName];
+      script.remove();
+      resolve();
+    };
+
+    const url =
+      `${API}?action=send&room=${encodeURIComponent(ROOM)}&name=${encodeURIComponent(name)}&text=${encodeURIComponent(text)}&callback=${encodeURIComponent(cbName)}`;
+
+    script.src = url;
+    document.body.appendChild(script);
+  });
+}
 
   function startPolling() {
     if (pollTimer) return;
