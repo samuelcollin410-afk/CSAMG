@@ -148,6 +148,448 @@
     </main>
   </section>
 
+ 
+ 
+ <!-- =========================
+     BEE SWARM CHAT (CLEAN UI)
+     Paste directly under: <script src="index.js"></script>
+========================= -->
+
+
+<style>
+  #chatWrap{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    width:min(360px, calc(100vw - 40px));
+    height:min(440px, calc(100vh - 40px));
+    background:rgba(15,18,30,.95);
+    backdrop-filter:blur(12px);
+    border:1px solid #2d3557;
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    z-index:99999;
+    box-shadow:0 10px 40px rgba(0,0,0,.4);
+  }
+  .chat-hidden{ display:none !important; }
+
+  .chat-header{
+    padding:12px 14px;
+    background:#121629;
+    border-bottom:1px solid #2d3557;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:#fff;
+    font-weight:600;
+  }
+  .chat-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+
+  
+  }
+  .chat-room{
+    padding:6px 8px;
+    border-radius:10px;
+    border:1px solid #2d3557;
+    background:#0b1020;
+    color:#fff;
+    font-size:13px;
+    outline:none;
+  }
+  #chatClose{
+    background:none;
+    border:none;
+    color:#aaa;
+    font-size:16px;
+    cursor:pointer;
+    line-height:1;
+  }
+  #chatClose:hover{ color:#fff; }
+
+  #chatLog{
+    flex:1;
+    padding:12px;
+    overflow:auto;
+    font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:#fff;
+    word-wrap:break-word;
+  }
+  #chatLog .msg{ margin-bottom:6px; opacity:.95; }
+
+  #chatHint{
+    padding:0 12px 6px;
+    min-height:16px;
+    font:12px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:#aaa;
+  }
+
+  #chatForm{
+    display:flex;
+    gap:6px;
+    padding:10px;
+    border-top:1px solid #2d3557;
+    background:rgba(8,10,20,.7);
+  }
+  #chatName,#chatInput{
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid #2d3557;
+    background:#0b1020;
+    color:#fff;
+    font-size:13px;
+    outline:none;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+  #chatName{ width:92px; }
+  #chatInput{ flex:1; }
+
+  #chatSendBtn{
+    padding:8px 12px;
+    border-radius:10px;
+    border:none;
+    background:#4c6fff;
+    color:#fff;
+    cursor:pointer;
+    font-size:13px;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+  #chatSendBtn:hover{ background:#3b5be0; }
+
+  #chatBtn{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    padding:10px 14px;
+    border-radius:14px;
+    background:#121629;
+    border:1px solid #2d3557;
+    color:#fff;
+    cursor:pointer;
+    z-index:100000;
+    font:14px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+</style>
+
+<div id="chatWrap" class="chat-hidden">
+  <div class="chat-header">
+    <div class="chat-left">
+       <span id="onlineCount" style="opacity:.75;font-weight:500;font-size:13px;">0 online</span>
+      <span>Chat</span>
+     <select id="chatRoom" class="chat-room">
+  <option value="global">Global</option>
+  <option value="beeswarm">BeeSwarm (WIP)</option>
+  <option value="general">General (WIP)</option>
+</select>
+    </div>
+    <button id="chatClose" type="button" aria-label="Close chat">✕</button>
+  </div>
+
+  <div id="chatLog"></div>
+  <div id="chatHint"></div>
+
+  <form id="chatForm" autocomplete="off">
+    <input id="chatName" maxlength="18" placeholder="Name">
+    <input id="chatInput" maxlength="200" placeholder="Type message...">
+    <button id="chatSendBtn" type="submit">Send</button>
+  </form>
+</div>
+
+<button id="chatBtn" type="button">Chat</button>
+
+<script>
+(() => {
+  const API = "https://script.google.com/macros/s/AKfycbxKGagfLNZWg1B8BFGlheRRw-BPb1WpcbojR2w5iMaiL-lW07SkPmqvgI2OnWeblJQz/exec";
+
+  // DOM refs
+  const chatWrap  = document.getElementById("chatWrap");
+  const chatBtn   = document.getElementById("chatBtn");
+  const chatClose = document.getElementById("chatClose");
+  const chatLog   = document.getElementById("chatLog");
+  const chatHint  = document.getElementById("chatHint");
+  const chatForm  = document.getElementById("chatForm");
+  const chatName  = document.getElementById("chatName");
+  const chatInput = document.getElementById("chatInput");
+  const chatRoom  = document.getElementById("chatRoom");
+  const onlineCountEl = document.getElementById("onlineCount");
+
+ 
+ 
+  // room + name persistence
+  let ROOM = localStorage.getItem("csamgg_chat_room") || "global";
+  chatRoom.value = ROOM;
+
+  const savedName = localStorage.getItem("beeswarm_chat_name");
+  if (savedName) chatName.value = savedName;
+
+  // anti-spam
+  const COOLDOWN_MS = 8000;
+  let lastSentAt = 0;
+
+  // polling
+  let lastSeenTs = 0;
+  const POLL_MS = 5000;
+  let pollTimer = null;
+
+  // dedupe
+  const seen = new Set();
+  const msgKey = (m) => `${m.ts}|${m.name}|${m.text}`;
+
+  function setHint(msg){ chatHint.textContent = msg || ""; }
+
+  function isWipRoom(room) {
+  return room === "beeswarm" || room === "general";
+}
+  
+  function addMsg(m){
+    const key = msgKey(m);
+    if (seen.has(key)) return;
+    seen.add(key);
+    if (seen.size > 800) seen.clear();
+
+    const time = new Date(m.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.textContent = `[${time}] ${m.name}: ${m.text}`;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function poll(){
+    return new Promise((resolve) => {
+      const cbName = "cb_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
+
+      window[cbName] = (data) => {
+        try{
+          if (data && data.ok && Array.isArray(data.messages)){
+            for (const m of data.messages){
+              addMsg(m);
+              if (m.ts > lastSeenTs) lastSeenTs = m.ts;
+            }
+          } else if (data && data.error){
+            setHint("Chat API error: " + data.error);
+          }
+        } finally {
+          delete window[cbName];
+          script.remove();
+          resolve();
+        }
+      };
+
+      script.onerror = () => {
+        setHint("Poll failed (blocked).");
+        delete window[cbName];
+        script.remove();
+        resolve();
+      };
+
+      script.src = `${API}?action=get&room=${encodeURIComponent(ROOM)}&since=${encodeURIComponent(lastSeenTs)}&callback=${encodeURIComponent(cbName)}`;
+      document.body.appendChild(script);
+    });
+  }
+
+  function sendMessage(name, text){
+    const now = Date.now();
+    const left = COOLDOWN_MS - (now - lastSentAt);
+    if (left > 0){
+      setHint(`Wait ${Math.ceil(left/1000)}s before sending again.`);
+      return Promise.resolve();
+    }
+    lastSentAt = now;
+    setHint("");
+
+    return new Promise((resolve) => {
+      const cbName = "sendcb_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
+
+      window[cbName] = (data) => {
+        try{
+          if (!data || !data.ok) setHint((data && data.error) || "Failed to send.");
+          else setTimeout(poll, 350);
+        } finally {
+          delete window[cbName];
+          script.remove();
+          resolve();
+        }
+      };
+
+      script.onerror = () => {
+        setHint("Send failed (blocked).");
+        delete window[cbName];
+        script.remove();
+        resolve();
+      };
+
+      script.src = `${API}?action=send&room=${encodeURIComponent(ROOM)}&name=${encodeURIComponent(name)}&text=${encodeURIComponent(text)}&callback=${encodeURIComponent(cbName)}`;
+      document.body.appendChild(script);
+    });
+  }
+
+  function startPolling(){
+    if (pollTimer) return;
+    poll();
+    pollTimer = setInterval(poll, POLL_MS);
+  }
+  function stopPolling(){
+    if (!pollTimer) return;
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+// ===== ONLINE (heartbeat + count) =====
+let pingTimer = null;
+let onlineTimer = null;
+
+// stable device id
+let userId = localStorage.getItem("csamgg_uid");
+if (!userId) {
+  userId = "u_" + Math.random().toString(36).slice(2, 10);
+  localStorage.setItem("csamgg_uid", userId);
+}
+
+// simple JSONP helper (re-usable)
+function jsonp(url) {
+  return new Promise((resolve) => {
+    const cbName = "ocb_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+
+    window[cbName] = (data) => {
+      try { resolve(data); } finally {
+        delete window[cbName];
+        script.remove();
+      }
+    };
+
+    script.onerror = () => {
+      delete window[cbName];
+      script.remove();
+      resolve(null);
+    };
+
+    script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cbName);
+    document.body.appendChild(script);
+  });
+}
+
+async function pingOnline() {
+  await jsonp(`${API}?action=ping&room=${encodeURIComponent(ROOM)}&userId=${encodeURIComponent(userId)}`);
+}
+
+async function refreshOnlineCount() {
+  const data = await jsonp(`${API}?action=online&room=${encodeURIComponent(ROOM)}`);
+  if (data && data.ok && typeof data.online === "number" && onlineCountEl) {
+    onlineCountEl.textContent = `${data.online} online`;
+  }
+}
+
+function startOnline() {
+  // do one immediately
+  pingOnline();
+  refreshOnlineCount();
+
+  if (!pingTimer) pingTimer = setInterval(pingOnline, 20000);          // every 20s
+  if (!onlineTimer) onlineTimer = setInterval(refreshOnlineCount, 5000); // every 5s
+}
+
+function stopOnline() {
+  if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+  if (onlineTimer) { clearInterval(onlineTimer); onlineTimer = null; }
+}
+  
+
+  function switchRoom(newRoom) {
+  ROOM = (newRoom || "global").toLowerCase();
+  localStorage.setItem("csamgg_chat_room", ROOM);
+
+  // reset state for new room
+  lastSeenTs = 0;
+  chatLog.innerHTML = "";
+  seen.clear();
+  setHint("");
+
+  if (isWipRoom(ROOM)) {
+    setHint("WIP — not enabled yet.");
+    stopPolling();
+    stopOnline();
+    return;
+  }
+
+  // if chat is open, restart polling + online for the new room
+  if (!chatWrap.classList.contains("chat-hidden")) {
+    startPolling();
+    startOnline();
+  }
+}
+
+  chatRoom.addEventListener("change", () => switchRoom(chatRoom.value));
+
+  // Always-visible button
+  chatBtn.style.display = "block";
+
+chatBtn.addEventListener("click", () => {
+  chatWrap.classList.remove("chat-hidden");
+  chatBtn.style.display = "none";
+
+  if (isWipRoom(ROOM)) {
+    setHint("WIP — not enabled yet.");
+    stopPolling();
+    stopOnline();
+  } else {
+    setHint("");
+    startPolling();
+    startOnline();
+  }
+
+  setTimeout(() => chatInput.focus(), 0);
+});
+
+chatClose.addEventListener("click", () => {
+  chatWrap.classList.add("chat-hidden");
+  chatBtn.style.display = "block";
+
+  stopPolling();
+  stopOnline();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !chatWrap.classList.contains("chat-hidden")) {
+    chatWrap.classList.add("chat-hidden");
+    chatBtn.style.display = "block";
+    stopPolling();
+    stopOnline();
+  }
+});
+  
+chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = (chatName.value || "anon").trim();
+    const text = (chatInput.value || "").trim();
+    if (!text) return;
+
+      if (isWipRoom(ROOM)) {
+    setHint("WIP — not enabled yet.");
+    return;
+  }
+    if (onlineCountEl) onlineCountEl.textContent = "… online";
+pingOnline();
+refreshOnlineCount();
+    localStorage.setItem("beeswarm_chat_name", name);
+    chatInput.value = "";
+    sendMessage(name, text);
+  });
+})();
+</script>
+<!-- =========================
+     END BEE SWARM CHAT
+========================= -->
+ 
   <script src="app.js"></script>
 </body>
 </html>

@@ -447,3 +447,12 @@ code{
 .backdrop.hidden{
   pointer-events: none;
 }
+.chat-room{
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid #2d3557;
+  background: #0b1020;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
